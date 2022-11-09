@@ -6,11 +6,14 @@ Austin:
 - Need apple developer tools installed
 
 Simply run:
-python3 setup.py build
-python3 setup.py install
+
+'python3 setup.py build'
+
+'python3 setup.py install'
 
 Then can use
-import SieveCSV
+
+'import SieveCSV'
 
 as normal (though will need to add methods in sievecsvmodule.c
 in the proper way)
