@@ -9,10 +9,8 @@ SieveCSV_system(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "s", &command)) {
         return NULL;
     }
-    // sts = PySpam_System(command);
-    // return PyLong_FromLong(sts);
-    long result = 0;
-    return PyLong_FromLong(result);
+    sts = system(command);
+    return PyLong_FromLong(sts);
 }
 
 static PyMethodDef SieveCSVMethods[] = {
