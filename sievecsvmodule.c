@@ -2,34 +2,36 @@
 #include <Python.h>
 
 static PyObject*
-spam_system(PyObject *self, PyObject *args)
+SieveCSV_system(PyObject *self, PyObject *args)
 {
     const char *command;
     int sts;
     if (!PyArg_ParseTuple(args, "s", &command)) {
         return NULL;
     }
-    sts = system(command);
-    return PyLong_FromLong(sts);
+    // sts = PySpam_System(command);
+    // return PyLong_FromLong(sts);
+    long result = 0;
+    return PyLong_FromLong(result);
 }
 
-static PyMethodDef SpamMethods[] = {
-    {"system", spam_system, METH_VARARGS, "Execute a shell command."},
+static PyMethodDef SieveCSVMethods[] = {
+    {"system", SieveCSV_system, METH_VARARGS, "Execute a shell command."},
     {NULL, NULL, 0, NULL}
 };
 
-PyDoc_STRVAR(spam_doc, "Module named spam");
-static struct PyModuleDef spammodule = {
+//PyDoc_STRVAR(spam_doc, "Module named spam");
+static struct PyModuleDef SieveCSVmodule = {
     PyModuleDef_HEAD_INIT,
-    "spam",
-    spam_doc,
+    "SieveCSV",
+    "An example Python C extension module",
     -1,
-    SpamMethods
+    SieveCSVMethods
 };
 
 PyMODINIT_FUNC
-PyInit_spam(void) {
-    return PyModule_Create(&spammodule);
+PyInit_SieveCSV(void) {
+    return PyModule_Create(&SieveCSVmodule);
 }
 
 int
@@ -40,17 +42,17 @@ main(int argc, char *argv[])
         fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
         exit(1);
     }
-    if(PyImport_AppendInittab("spam", PyInit_spam) == -1) {
+    if(PyImport_AppendInittab("SieveCSV", PyInit_SieveCSV) == -1) {
         fprintf(stderr, "Error: could not extend in-built modules table\n");
         exit(1);
     }
 
     Py_SetProgramName(program);
     Py_Initialize();
-    PyObject *pmodule = PyImport_ImportModule("spam");
+    PyObject *pmodule = PyImport_ImportModule("SieveCSV");
     if (!pmodule) {
         PyErr_Print();
-        fprintf(stderr, "Error: could not import module 'spam'\n");
+        fprintf(stderr, "Error: could not import module 'SieveCSV'\n");
     }
     PyMem_RawFree(program);
     return 0;
