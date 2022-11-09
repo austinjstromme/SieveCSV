@@ -13,8 +13,41 @@ SieveCSV_system(PyObject *self, PyObject *args)
     return PyLong_FromLong(sts);
 }
 
+static PyObject*
+SieveCSV_parse(PyObject *self, PyObject *args) {
+    const char *filename;
+    int* col_idxs;
+    const char **filters;
+
+    if (!PyArg_ParseTuple(args, "s(i)(s)", &filename, &col_idxs, &filters)) {
+        return NULL;
+    }
+    
+    printf("%s\n", filename);
+    return PyUnicode_FromString(filename);
+    // parse inputs from python
+    // pass to internal_parse
+    // get result from internal_parse
+    // pass to output_wrapper
+    // return
+}
+
+// typedef struct SieveCSVOutput {
+//     // TODO, but oonly knowable after starting
+//     // file pointer
+// }
+
+// static SieveCSVOutput* internal_parse(const char* filename, int* col_idxs, const char** filters) {
+//     return NULL;
+// }
+
+// static PyObject* output_wrapper(SieveCSVOutput* internal_iterator) {
+//     return NULL;
+// }
+
 static PyMethodDef SieveCSVMethods[] = {
-    {"system", SieveCSV_system, METH_VARARGS, "Execute a shell command."},
+//    {"system", SieveCSV_system, METH_VARARGS, "Execute a shell command."},
+    {"parse_csv", SieveCSV_parse, METH_VARARGS |  METH_KEYWORDS, "Parse a CSV file and return an iterator."},
     {NULL, NULL, 0, NULL}
 };
 
