@@ -45,7 +45,6 @@ SieveCSV_parse(PyObject *self, PyObject *args) {
 //     return NULL;
 // }
 
->>>>>>> 1628ac1e4039e798f651534f3fee6e45ea1055f1
 static PyMethodDef SieveCSVMethods[] = {
 //    {"system", SieveCSV_system, METH_VARARGS, "Execute a shell command."},
     {"parse_csv", SieveCSV_parse, METH_VARARGS |  METH_KEYWORDS, "Parse a CSV file and return an iterator."},
