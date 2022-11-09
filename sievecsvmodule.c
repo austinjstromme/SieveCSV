@@ -13,6 +13,18 @@ SieveCSV_system(PyObject *self, PyObject *args)
     return PyLong_FromLong(sts);
 }
 
+static PyObject*
+SieveCSV_parse(PyObject *self, PyObject *args) {
+    const char *command;
+    if (!PyArg_ParseTuple(args, "s", &command)) {
+        return NULL;
+    }
+
+    // do parsing
+    //
+    // return parsing
+}
+
 static PyMethodDef SieveCSVMethods[] = {
     {"system", SieveCSV_system, METH_VARARGS, "Execute a shell command."},
     {NULL, NULL, 0, NULL}

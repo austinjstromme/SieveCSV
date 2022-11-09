@@ -18,6 +18,20 @@ Then can use
 as normal (though will need to add methods in sievecsvmodule.c
 in the proper way)
 
+
+----
+Design, tasks before midterm report:
+
+- Figure out argument parsing (Alan, ideally Wednesday night)
+- Source csvs, set up test cases, timing, and demo (Austin, )
+	-- matplotlib
+- Filter and parse CSV (Alan, Arthur)
+	-- Define contract (Thursday)
+- Get CSV back out of C into python (Austin, Noah, by weekend)
+
+Tasks for midterm report:
+- Write it (Sunday, Monday)
+
 ----
 Arthur:
 - Debian GNU/Linux 11
