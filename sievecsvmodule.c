@@ -18,12 +18,54 @@ SieveCSV_parse(PyObject *self, PyObject *args) {
     const char *filename;
     int* col_idxs;
     const char **filters;
+    char err_buf[500];
 
-    if (!PyArg_ParseTuple(args, "s(i)(s)", &filename, &col_idxs, &filters)) {
+    PyObject *colraw;
+    PyObject *filtraw;
+
+    if (!PyArg_ParseTuple(args, "sOO", &filename, &colraw, &filtraw)) {
+        return NULL;
+    }
+
+    if(!PyList_Check(colraw) || !PyList_Check(filtraw)) {
+        PyErr_SetString(PyExc_TypeError, "column and filter must be lists");
+        return NULL;
+    }
+
+    int col_size = PyList_Size(colraw);
+    int filt_size = PyList_Size(filtraw);
+    if(filt_size != col_size) {
+        sprintf(err_buf, "column and filter must be different lengths (currently %i and %i)", col_size, filt_size);
+        PyErr_SetString(PyExc_IndexError, err_buf);
         return NULL;
     }
     
-    printf("%s\n", filename);
+    col_idxs = malloc(col_size * sizeof(int));
+    filters = malloc(col_size * sizeof(char *));
+    for(int i = 0; i < col_size; i++) {
+	    PyObject *col_idx = PyList_GetItem(colraw, i);
+	    PyObject *filter = PyList_GetItem(filtraw, i);
+        if(!PyLong_Check(col_idx)) {
+            sprintf(err_buf, "column entry at index %i was not an integer", i);
+            PyErr_SetString(PyExc_TypeError, err_buf);
+            return NULL;
+        }
+        if(!PyUnicode_Check(filter)) {
+            sprintf(err_buf, "filter entry at index %i was not a string", i);
+            PyErr_SetString(PyExc_TypeError, err_buf);
+            return NULL;
+        }
+        col_idxs[i] = (int) PyLong_AsLong(col_idx);
+        filters[i] = PyUnicode_AsUTF8AndSize(filter, NULL);
+    }
+
+    // PyObject* tbr = Py_BuildValue("[i,i, s, s]", col_idxs[0], col_idxs[1], filters[0], filters[1]);
+
+    free(col_idxs);
+    free(filters);
+ 
+    // return tbr;
+
     return PyUnicode_FromString(filename);
     // parse inputs from python
     // pass to internal_parse
