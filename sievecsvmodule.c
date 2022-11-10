@@ -1,5 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include "parse.h"
+#include "wrapper.h"
 
 static PyObject*
 SieveCSV_system(PyObject *self, PyObject *args)
@@ -59,45 +61,21 @@ SieveCSV_parse(PyObject *self, PyObject *args) {
         filters[i] = PyUnicode_AsUTF8AndSize(filter, NULL);
     }
 
-    // PyObject* tbr = Py_BuildValue("[i,i, s, s]", col_idxs[0], col_idxs[1], filters[0], filters[1]);
-
+    // PyObject* ret_val = wrap_grid(parse(filename, col_idxs, filters));
     free(col_idxs);
     free(filters);
- 
-    // return tbr;
-
-    return PyUnicode_FromString(filename);
-    // parse inputs from python
-    // pass to internal_parse
-    // get result from internal_parse
-    // pass to output_wrapper
-    // return
+    return PyLong_FromLong(69);
 }
 
-// typedef struct SieveCSVOutput {
-//     // TODO, but oonly knowable after starting
-//     // file pointer
-// }
-
-// static SieveCSVOutput* internal_parse(const char* filename, int* col_idxs, const char** filters) {
-//     return NULL;
-// }
-
-// static PyObject* output_wrapper(SieveCSVOutput* internal_iterator) {
-//     return NULL;
-// }
-
 static PyMethodDef SieveCSVMethods[] = {
-//    {"system", SieveCSV_system, METH_VARARGS, "Execute a shell command."},
     {"parse_csv", SieveCSV_parse, METH_VARARGS |  METH_KEYWORDS, "Parse a CSV file and return an iterator."},
     {NULL, NULL, 0, NULL}
 };
 
-//PyDoc_STRVAR(spam_doc, "Module named spam");
 static struct PyModuleDef SieveCSVmodule = {
     PyModuleDef_HEAD_INIT,
     "SieveCSV",
-    "An example Python C extension module",
+    "A C++ Python extension module for fast parsing.",
     -1,
     SieveCSVMethods
 };
@@ -106,27 +84,3 @@ PyMODINIT_FUNC
 PyInit_SieveCSV(void) {
     return PyModule_Create(&SieveCSVmodule);
 }
-
-//int
-//main(int argc, char *argv[]) 
-//{
-//    wchar_t *program = Py_DecodeLocale(argv[0], NULL);
-//    if (program == NULL) {
-//        fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
-//        exit(1);
-//    }
-//    if(PyImport_AppendInittab("SieveCSV", PyInit_SieveCSV) == -1) {
-//        fprintf(stderr, "Error: could not extend in-built modules table\n");
-//        exit(1);
-//    }
-//
-//    Py_SetProgramName(program);
-//    Py_Initialize();
-//    PyObject *pmodule = PyImport_ImportModule("SieveCSV");
-//    if (!pmodule) {
-//        PyErr_Print();
-//        fprintf(stderr, "Error: could not import module 'SieveCSV'\n");
-//    }
-//    PyMem_RawFree(program);
-//   return 0;
-//}

@@ -1,6 +1,6 @@
 from distutils.core import setup, Extension
 
-module = Extension("SieveCSV", sources=["sievecsvmodule.c"], extra_compile_args=["-Wall"])
+module = Extension("SieveCSV", sources=["sievecsvmodule.c" ], extra_compile_args=["-Wall"])
 
 setup(
     name="SieveCSV",
