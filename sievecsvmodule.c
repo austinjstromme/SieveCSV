@@ -1,7 +1,53 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include "parse.h"
-#include "wrapper.h"
+
+const int MAX_ROWS = 1024;
+const int MAX_COLS = 32; 
+const int MAX_CHARS_IN_CELL = 64;
+
+struct CSV_Grid {
+    char*** table;
+    int rows;
+    int cols;
+};
+
+typedef struct CSV_Grid CSV_Grid;
+
+static const CSV_Grid parse(const char* filename, int* col_idxs, const char** filters) {
+    // this is mostly filler to generate a random grid
+    CSV_Grid grid;
+    const int ROWS = 10;
+    const int COLS = 5;
+    const int MAX_LEN = 20;
+    char*** table = (char***) malloc(ROWS * sizeof(char**));
+    for (int i = 0; i < ROWS; i++) {
+        table[i] = (char**) malloc(COLS * sizeof(char*));
+        for (int j = 0; j < COLS; j++) {
+            table[i][j] = (char*) malloc(MAX_LEN * sizeof(char));
+            sprintf(table[i][j], "row%dcol%d", i, j);
+        }
+    }
+    grid.rows = ROWS;
+    grid.cols = COLS;
+    grid.table = table;
+    return grid;
+}
+
+PyObject* wrap_grid(CSV_Grid grid) {
+    PyObject* py_grid = PyList_New(0);
+    for (int i = 0; i < grid.rows; i++) {
+        PyObject* row = PyList_New(0);
+        for (int j = 0; j < grid.cols; j++) {
+            if (grid.table[i][j] == NULL) {
+                PyList_Append(row, Py_None);
+            } else {
+                PyList_Append(row, PyUnicode_FromString(grid.table[i][j]));
+            }
+        }
+        PyList_Append(py_grid, row);
+    }
+    return py_grid;
+}
 
 static PyObject*
 SieveCSV_system(PyObject *self, PyObject *args)
@@ -61,10 +107,10 @@ SieveCSV_parse(PyObject *self, PyObject *args) {
         filters[i] = PyUnicode_AsUTF8AndSize(filter, NULL);
     }
 
-    // PyObject* ret_val = wrap_grid(parse(filename, col_idxs, filters));
+    PyObject* ret_val = wrap_grid(parse(filename, col_idxs, filters));
     free(col_idxs);
     free(filters);
-    return PyLong_FromLong(69);
+    return ret_val;
 }
 
 static PyMethodDef SieveCSVMethods[] = {
