@@ -363,6 +363,7 @@ static const CSV_Grid parse(const char* filename, int* col_idxs, const char** fi
     grid.table = table;
     grid.rows = row_count;
     grid.cols = col_count;
+    fclose(fp);
     return grid;
 }
 

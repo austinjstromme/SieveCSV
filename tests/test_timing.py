@@ -24,7 +24,8 @@ Filters csv at filename on filters
 and cols using python's built-in csv parser
 """
 def filter_csv(filename, filters, cols):
-    reader = csv.reader(open(filename))
+    f = open(filename)
+    reader = csv.reader(f)
 
     zipped_filters_cols = list(zip(filters, cols))
 
@@ -41,6 +42,8 @@ def filter_csv(filename, filters, cols):
 
         if passes_filters is True:
             result.append(row)
+
+    f.close()
 
     return result
 
