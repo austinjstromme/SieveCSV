@@ -232,6 +232,7 @@ static char** maybe_get_row(FILE* file, int* col_idxs, const char** filters, int
     }
     if (is_good_row != 0) {
         // if it's a good row, return it.
+        free(entry);
         return maybe_row;
     } else {
         // else, return a null pointer
@@ -239,6 +240,7 @@ static char** maybe_get_row(FILE* file, int* col_idxs, const char** filters, int
         for (int i = 0; i < *col_count; i++) {
             free(maybe_row[i]);
         }
+        free(entry);
         free(maybe_row);
         return NULL;
     }
