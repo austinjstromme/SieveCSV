@@ -60,32 +60,32 @@ in the form
 
 boolean, list of lists, list of lists
 """
-def compare_output(filename, filters, cols):
-    sievecsvfiltered = SieveCSV.parse_csv(filename, cols, filters)
+def timing_loop(iterations, filename = "../csvs/small.csv", filters = ["1"], cols = [0]):
+    s_csv_time = 0
+    py_csv_time = 0
+    for _ in range(iterations):
+        s_csv_start = time.time()
+        sievecsvfiltered = SieveCSV.parse_csv(filename, cols, filters)
+        s_csv_end = time.time()
+        s_csv_time += s_csv_end - s_csv_start
 
-    pyfiltered = filter_csv(filename, filters, cols)
+        py_csv_start = time.time()
+        pyfiltered = filter_csv(filename, filters, cols)
+        py_csv_end = time.time()
+        py_csv_time += py_csv_end - py_csv_start
 
-    if len(sievecsvfiltered) != len(pyfiltered):
-        return False, sievecsvfiltered, pyfiltered
+        if len(sievecsvfiltered) != len(pyfiltered):
+            print(sievecsvfiltered)
+            print(pyfiltered)
+            raise Exception("did not match! " + str(_))
 
-    zippedfiltered = zip(sievecsvfiltered, pyfiltered)
+        zippedfiltered = zip(sievecsvfiltered, pyfiltered)
 
-    for rowsieve, rowpy in zippedfiltered:
-        if not same_row(rowsieve, rowpy):
-            print(rowsieve, rowpy)
-            return False, sievecsvfiltered, pyfiltered
+        for rowsieve, rowpy in zippedfiltered:
+            if not same_row(rowsieve, rowpy):
+                raise Exception("did not match!")
 
-    return True, sievecsvfiltered, pyfiltered
+    return (s_csv_time, py_csv_time)
 
-
-class TestNoFilter(unittest.TestCase):
-    def test_no_filter(self):
-        filenames = ['../csvs/small.csv', '../csvs/simple.csv']
-        filters = [["1"], ["1"]]
-        cols = [[0], [0]]
-
-        zippedargs = zip(filenames, filters, cols)
-
-        for fname, filterlist, collist in zippedargs:
-            same, sieveoutput, pyoutput = compare_output(fname, filterlist, collist)
-            self.assertTrue(same)
+if __name__ == "__main__":
+    print(timing_loop(32000))
