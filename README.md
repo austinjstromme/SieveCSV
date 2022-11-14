@@ -18,6 +18,20 @@ Then can use
 as normal (though will need to add methods in sievecsvmodule.c
 in the proper way)
 
+---- 
+Some design decisions we'll need to make:
+- Do we want to make SieveCSV support line-by-line parsing?
+- Do we want to do substring filtering or exact filtering or both?
+
+
+----
+
+Current bugs:
+
+- when the filename passed into parse doesn't refer to an existing file
+the module hangs
+
+
 
 ----
 Design, tasks before midterm report:
