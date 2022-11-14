@@ -349,6 +349,7 @@ static CSV_Grid* parse(const char* filename, int* col_idxs, const char** filters
                     col_count = new_col_count; 
                 }
             }
+            free(maybe_rows);
         } else {
             debug_printf("raw filter does not match\n");
             advance(fp); 
@@ -452,6 +453,7 @@ SieveCSV_parse(PyObject *self, PyObject *args) {
         free(g->table[i]);
     }
     free(g->table);
+    free(g);
     free(col_idxs);
     free(filters);
     return ret_val;
