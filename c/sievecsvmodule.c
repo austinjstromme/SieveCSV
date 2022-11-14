@@ -307,9 +307,9 @@ Given a filename, a list of column indices, and a list of strings,
 return a representation of all rows in the CSV named filename,
 where, for i in [0, len(col_idxs)], the col_idxs[i]-th field is an exact match for filters[i].
 */
-static const CSV_Grid parse(const char* filename, int* col_idxs, const char** filters, int filter_count) {
+static CSV_Grid* parse(const char* filename, int* col_idxs, const char** filters, int filter_count) {
     // will return a grid of at most MAX_ROWS rows
-    CSV_Grid grid;
+    CSV_Grid* grid = malloc(sizeof(CSV_Grid));
 
     FILE* fp = fopen(filename, "rb");
     if (!fp) {
@@ -360,23 +360,24 @@ static const CSV_Grid parse(const char* filename, int* col_idxs, const char** fi
     }
     // in future, feof(fp) / ferror(fp) can check between end-of-file and error. for now, both return the same thing.
 
-    grid.table = table;
-    grid.rows = row_count;
-    grid.cols = col_count;
+    grid->table = table;
+    grid->rows = row_count;
+    grid->cols = col_count;
     fclose(fp);
+    free(raw_filter);
     return grid;
 }
 
-PyObject* wrap_grid(CSV_Grid grid) {
+PyObject* wrap_grid(CSV_Grid* grid) {
     PyObject* py_grid = PyList_New(0);
     
-    for (int i = 0; i < grid.rows; i++) {
+    for (int i = 0; i < grid->rows; i++) {
         PyObject* row = PyList_New(0);
-        for (int j = 0; j < grid.cols; j++) {
-            if (grid.table == NULL || grid.table[i] == NULL || grid.table[i][j] == NULL) {
+        for (int j = 0; j < grid->cols; j++) {
+            if (grid->table == NULL || grid->table[i] == NULL || grid->table[i][j] == NULL) {
                 PyList_Append(row, Py_None);
             } else {
-                PyList_Append(row, PyUnicode_FromString(grid.table[i][j]));
+                PyList_Append(row, PyUnicode_FromString(grid->table[i][j]));
             }
         }
         PyList_Append(py_grid, row);
@@ -442,7 +443,13 @@ SieveCSV_parse(PyObject *self, PyObject *args) {
         filters[i] = PyUnicode_AsUTF8AndSize(filter, NULL);
     }
 
-    PyObject* ret_val = wrap_grid(parse(filename, col_idxs, filters, col_size));
+    CSV_Grid* g = parse(filename, col_idxs, filters, col_size);
+    PyObject* ret_val = wrap_grid(g);
+    for(int i = 0; i < g->rows; i++){
+        for(int j = 0; j < g->cols; j++) free(g-> table[i][j]);
+        free(g->table[i]);
+    }
+    free(g->table);
     free(col_idxs);
     free(filters);
     return ret_val;
