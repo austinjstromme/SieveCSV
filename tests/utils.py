@@ -36,12 +36,13 @@ def filter_csv(filename, cols, filters):
         passes_filters = True
 
         for (filt, i) in zipped_filters_cols:
-            if i > len(row): 
+            if i >= len(row):
+                continue
+            if filt not in row[i]:
                 passes_filters = False
-            if row[i] != filt:
-                passes_filters = False
+                break
 
-        if passes_filters is True:
+        if passes_filters:
             result.append(row)
 
     f.close()
@@ -68,16 +69,57 @@ def compare_output(testcase, filename, cols, filters):
 
     pyfiltered = filter_csv(filename, cols, filters)
 
-    testcase.assertTrue(len(sievecsvfiltered) == len(pyfiltered), ("SieveCSV and python"
-        + " are returning different numbers of rows"))
+    sieve_len = len(sievecsvfiltered)
+    py_len = len(pyfiltered)
 
-    zippedfiltered = zip(sievecsvfiltered, pyfiltered)
+    sieve_rows = set()
+    py_rows = set()
+    MAX_ROWS_CHECKED = 20
+    num_rows_to_check = max(sieve_len, py_len)
 
-    for rowsieve, rowpy in zippedfiltered:
-        message = "SieveCSV and python are returning different rows. Sieve CSV gets "
-        message += str(rowsieve)
-        testcase.assertTrue(same_row(rowsieve, rowpy), message + ", while python gets " + str(rowpy))
+    diff_col_counts = ""
+    for i in range(num_rows_to_check):
+        if i < sieve_len:
+            sieve_rows.add(tuple(sievecsvfiltered[i]))
+        if i < py_len:
+            py_rows.add(tuple(pyfiltered[i]))
+        if i < py_len and i < sieve_len:
+            if len(pyfiltered[i]) != len(sievecsvfiltered[i]):
+                diff_col_counts = f"Found that Python returned row with {len(pyfiltered[i])} columns, while SieveCSV returned row with {len(sievecsvfiltered[i])} columns. "
 
+    sieve_not_py = sieve_rows - py_rows
+    py_not_sieve = py_rows - sieve_rows
+
+    fail = False
+    length_msg = ""
+    if sieve_len > py_len:
+        length_msg = "SieveCSV returns more rows than Python. "
+        fail = True
+    elif sieve_len < py_len:
+        length_msg = "Python returns more rows than SieveCSV. "
+        fail = True
+    else:
+        length_msg = "SieveCSV and Python return the same number of rows. "
+
+    diff_msg = ""
+    if len(sieve_not_py) != 0:
+        sieve_bad_row = None
+        for row in sieve_not_py:
+            sieve_bad_row = row
+            break
+        diff_msg += f"SieveCSV returns row {sieve_bad_row}, which is not returned by Python. "
+        fail = True
+    if len(py_not_sieve) != 0:
+        py_bad_row = None
+        for row in py_not_sieve:
+            py_bad_row = row
+            break
+        diff_msg += f"SieveCSV did not return row {py_bad_row}, which was returned by Python. "
+        fail = True
+
+    cols_and_filters = f"Columns requested were {cols}. Filters requested were {filters}. "
+    row_nums = f"SieveCSV returned {sieve_len} rows, while Python returned {py_len} rows. "
+    testcase.assertTrue(not fail, length_msg + row_nums + diff_msg + cols_and_filters + diff_col_counts)   
 
 """
 Runs compare_output on each argument tuple
@@ -87,4 +129,4 @@ def compare_output_multiple(testcase, filenames, cols, filters):
         zippedargs = zip(filenames, cols, filters)
 
         for fname, collist, filterlist in zippedargs:
-            compare_output(testcase, fname, filterlist, collist)
+            compare_output(testcase, fname, collist, filterlist)

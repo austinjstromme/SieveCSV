@@ -20,8 +20,8 @@ static void debug_printf(const char* format, ...) {
     }
 }
 
-static const int MAX_ROWS = 128;
-static const int MAX_COLS = 64;
+static const int MAX_ROWS = 16384;
+static const int MAX_COLS = 1024;
 static const int MAX_LEN_ENTRY = 64;
 
 
