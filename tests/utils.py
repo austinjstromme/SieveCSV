@@ -1,6 +1,7 @@
 import unittest
 import csv
 import time
+
 import SieveCSV
 
 """
@@ -23,8 +24,9 @@ def same_row(rowa, rowb):
 Filters csv at filename on filters
 and cols using python's built-in csv parser
 """
-def filter_csv(filename, filters, cols):
-    reader = csv.reader(open(filename))
+def filter_csv(filename, cols, filters):
+    f = open(filename)
+    reader = csv.reader(f)
 
     zipped_filters_cols = list(zip(filters, cols))
 
@@ -42,50 +44,36 @@ def filter_csv(filename, filters, cols):
         if passes_filters is True:
             result.append(row)
 
+    f.close()
+
     return result
 
 """
 Compares the output of SieveCSV with the
 output of python's csv parser on a csv file
 
+testcase (unittest.TestCase) testcase to throw errows with
 filename (string)            csv file to filter and parse
 filters (list of strings)    filters to apply
 rows (list of integers)      rows to apply filter to
 
 Applies filters[i] at row rows[i]
 
-Returns whether they are the same, the output
-of SieveCSV, and the output of pythons CSV package naively filtered
-in the form
+Uses testcase to assert that SieveCSV and python return the same thing
 
 boolean, list of lists, list of lists
 """
-def compare_output(filename, filters, cols):
+def compare_output(testcase, filename, filters, cols):
     sievecsvfiltered = SieveCSV.parse_csv(filename, cols, filters)
 
     pyfiltered = filter_csv(filename, filters, cols)
 
-    if len(sievecsvfiltered) != len(pyfiltered):
-        return False, sievecsvfiltered, pyfiltered
+    testcase.assertTrue(len(sievecsvfiltered) == len(pyfiltered), ("SieveCSV and python"
+        + " are returning different numbers of rows"))
 
     zippedfiltered = zip(sievecsvfiltered, pyfiltered)
 
     for rowsieve, rowpy in zippedfiltered:
-        if not same_row(rowsieve, rowpy):
-            print(rowsieve, rowpy)
-            return False, sievecsvfiltered, pyfiltered
-
-    return True, sievecsvfiltered, pyfiltered
-
-
-class TestNoFilter(unittest.TestCase):
-    def test_no_filter(self):
-        filenames = ['../csvs/small.csv', '../csvs/simple.csv']
-        filters = [["1"], ["1"]]
-        cols = [[0], [0]]
-
-        zippedargs = zip(filenames, filters, cols)
-
-        for fname, filterlist, collist in zippedargs:
-            same, sieveoutput, pyoutput = compare_output(fname, filterlist, collist)
-            self.assertTrue(same)
+        message = "SieveCSV and python are returning different rows. Sieve CSV gets "
+        message += str(rowsieve)
+        testcase.assertTrue(same_row(rowsieve, rowpy), message + ", while python gets " + str(rowpy))
