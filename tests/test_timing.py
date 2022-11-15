@@ -1,6 +1,6 @@
 import time
 
-import test_utils as utils
+import utils
 import SieveCSV
 
 def timing_loop(iterations, filename = "../csvs/small.csv", filters = ["1"], cols = [0]):
