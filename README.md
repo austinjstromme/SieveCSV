@@ -7,8 +7,6 @@ Austin:
 
 Simply run:
 
-`python3 setup.py build`
-
 `python3 setup.py install`
 
 Then can use
@@ -17,6 +15,11 @@ Then can use
 
 as normal (though will need to add methods in sievecsvmodule.c
 in the proper way)
+
+---
+FOR TESTING:
+
+`python3 tests/test_filter.py`
 
 ---- 
 Some design decisions we'll need to make:
