@@ -63,10 +63,10 @@ Uses testcase to assert that SieveCSV and python return the same thing
 
 boolean, list of lists, list of lists
 """
-def compare_output(testcase, filename, filters, cols):
+def compare_output(testcase, filename, cols, filters):
     sievecsvfiltered = SieveCSV.parse_csv(filename, cols, filters)
 
-    pyfiltered = filter_csv(filename, filters, cols)
+    pyfiltered = filter_csv(filename, cols, filters)
 
     testcase.assertTrue(len(sievecsvfiltered) == len(pyfiltered), ("SieveCSV and python"
         + " are returning different numbers of rows"))
@@ -77,3 +77,14 @@ def compare_output(testcase, filename, filters, cols):
         message = "SieveCSV and python are returning different rows. Sieve CSV gets "
         message += str(rowsieve)
         testcase.assertTrue(same_row(rowsieve, rowpy), message + ", while python gets " + str(rowpy))
+
+
+"""
+Runs compare_output on each argument tuple
+in filenames, cols, filters zipped together
+"""
+def compare_output_multiple(testcase, filenames, cols, filters):
+        zippedargs = zip(filenames, cols, filters)
+
+        for fname, collist, filterlist in zippedargs:
+            compare_output(testcase, fname, filterlist, collist)
