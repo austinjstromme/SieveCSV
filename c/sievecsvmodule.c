@@ -1,6 +1,8 @@
 #define PY_SSIZE_T_CLEAN
+#define SIMDE_ENABLE_NATIVE_ALIASES
 #include <Python.h>
 #include <stdarg.h>
+#include <simde/x86/avx2.h>
 
 struct CSV_Grid {
     char*** table;
@@ -63,21 +65,34 @@ Assumes that each row will be much longer than our filter, or at least 8 charact
 static const int apply_raw_filter(FILE* file, char* raw_filter, int filter_len) {
     // Currently I will not use SIMD. Goal will be to get it working without SIMD, 
     // then modify to use SIMD. 
+    if(filter_len == 0) return 1;
     fpos_t old_start;
     fgetpos(file, &old_start);
-    int ans = 1;
-    for (int i = 0; i < filter_len; i++) {
-        int current_char = fgetc(file);
-        if (current_char == EOF) {
-            ans = 0; // No character in file to correspond to.
-            break;
-        }
-        if (current_char != (int) (raw_filter[i])) {
-            ans = 0; // Current char in file doesn't match the filter.
-            break;
-        }
+    size_t buffer_len = 32 + filter_len;
+    char* buffer = (char*) malloc((buffer_len + 1) * sizeof(char));
+    uint32_t found = 0;
+    if (buffer_len == fread(buffer, sizeof(char), buffer_len, file)) {
+        const __m256i first = _mm256_set1_epi8(raw_filter[0]);
+        const __m256i last  = _mm256_set1_epi8(raw_filter[filter_len - 1]);
+
+        const __m256i block_first = _mm256_loadu_si256((const __m256i*)(buffer));
+        const __m256i block_last  = _mm256_loadu_si256((const __m256i*)(buffer + filter_len - 1));
+
+        const __m256i eq_first = _mm256_cmpeq_epi8(first, block_first);
+        const __m256i eq_last  = _mm256_cmpeq_epi8(last, block_last);
+
+        uint32_t mask = _mm256_movemask_epi8(_mm256_and_si256(eq_first, eq_last));
+        debug_printf("raw filter set\n");
+        found = mask;
+    } else {
+        found = 1u;
     }
+    debug_printf("post row-filter %s %i\n", buffer, found);
     fsetpos(file, &old_start);
+    if(!found) return 0;
+    int ans = strstr(buffer, raw_filter) != NULL;
+    free(buffer);
+    debug_printf("ultimate answer %i\n", ans);
     return ans;
 }
 
@@ -300,8 +315,8 @@ static char*** maybe_get_rows(FILE* file, int* col_idxs, const char** filters, i
 /*
 Advance file's start pointer by 1 character. 
 */
-static const void advance(FILE* file) {
-    fseek(file, 1 * sizeof(char), SEEK_CUR);
+static void advance(FILE* file) {
+    fseek(file, 32 * sizeof(char), SEEK_CUR);
 }
 
 /*

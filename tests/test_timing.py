@@ -28,8 +28,9 @@ def timing_loop(iterations, filename = "../csvs/small.csv", filters = ["1"], col
             if not utils.same_row(rowsieve, rowpy):
                 raise Exception("did not match!")
 
-    return (s_csv_time, py_csv_time)
+    return f"we took: {s_csv_time}, they took: {py_csv_time}"
 
 if __name__ == "__main__":
-    #print(timing_loop(5, filename="../csvs/randomlarge.csv", filters = [], cols = []))
-    print(timing_loop(500, filters = [], cols = []))
+    print(timing_loop(5, filename="../csvs/randomlarge.csv"))
+    print(timing_loop(10000, filters = [], cols = []))
+    print(timing_loop(10000))
