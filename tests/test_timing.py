@@ -32,5 +32,7 @@ def timing_loop(iterations, filename = "../csvs/small.csv", filters = ["1"], col
 
 if __name__ == "__main__":
     print(timing_loop(5, filename="../csvs/randomlarge.csv"))
+    print(timing_loop(5, filename="../csvs/randomlarge.csv", filters = ["0", "00"], cols = [98, 99]))
+    print(timing_loop(5, filename="../csvs/randomlarge.csv", filters = ["000", "0"], cols = [49, 99]))
     print(timing_loop(10000, filters = [], cols = []))
     print(timing_loop(10000))

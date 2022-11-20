@@ -3,7 +3,7 @@ import numpy as np
 
 WIDTH = 100
 LENGTH = 10000
-RANGE = 100
+RANGE = 10000
 
 np.random.seed(0)
 
