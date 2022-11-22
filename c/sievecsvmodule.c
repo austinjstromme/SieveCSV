@@ -89,7 +89,10 @@ static const int apply_raw_filter(FILE* file, char* raw_filter, int filter_len) 
     }
     debug_printf("post row-filter %s %i\n", buffer, found);
     fsetpos(file, &old_start);
-    if(!found) return 0;
+    if(!found) {
+        free(buffer);
+        return 0;
+    }
     int ans = strstr(buffer, raw_filter) != NULL;
     free(buffer);
     debug_printf("ultimate answer %i\n", ans);
