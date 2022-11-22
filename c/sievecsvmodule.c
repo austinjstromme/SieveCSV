@@ -419,7 +419,7 @@ PyObject* wrap_grid(CSV_Grid* grid) {
 // }
 
 static PyObject*
-SieveCSV_parse(PyObject *self, PyObject *args) {
+SieveCSV_parse(PyObject *self, PyObject *args, PyObject *kwargs) {
     const char *filename;
     int* col_idxs;
     const char **filters;
@@ -427,11 +427,14 @@ SieveCSV_parse(PyObject *self, PyObject *args) {
 
     PyObject *colraw;
     PyObject *filtraw;
-
-    if (!PyArg_ParseTuple(args, "sOO", &filename, &colraw, &filtraw)) {
+    int no_simd = 0;
+    int no_c_filter = 0;
+    int naive_simd = 0;
+    static char *kwlist[] = {"filename", "columns", "filters", "no_simd", "no_c_filter", "naive_simd", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sOO|$pp", kwlist, &filename, &colraw, &filtraw, &no_simd, &no_c_filter, &naive_simd)) {
         return NULL;
     }
-
+    
     if(!PyList_Check(colraw) || !PyList_Check(filtraw)) {
         PyErr_SetString(PyExc_TypeError, "column and filter must be lists");
         return NULL;
@@ -478,14 +481,14 @@ SieveCSV_parse(PyObject *self, PyObject *args) {
 }
 
 static PyMethodDef SieveCSVMethods[] = {
-    {"parse_csv", SieveCSV_parse, METH_VARARGS |  METH_KEYWORDS, "Parse a CSV file and return an iterator."},
+    {"parse_csv", (PyCFunction) SieveCSV_parse, METH_VARARGS |  METH_KEYWORDS, "Parse a CSV file and return an iterator."},
     {NULL, NULL, 0, NULL}
 };
 
 static struct PyModuleDef SieveCSVmodule = {
     PyModuleDef_HEAD_INIT,
     "SieveCSV",
-    "A C++ Python extension module for fast parsing.",
+    "A Python extension module written in C for fast parsing.",
     -1,
     SieveCSVMethods
 };
