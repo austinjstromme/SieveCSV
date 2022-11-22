@@ -61,39 +61,46 @@ On returning, file's start should be moved back to where it was at the beginning
 function. 
 
 Assumes that each row will be much longer than our filter, or at least 8 characters per row.
+
+char* buffer should be at least 33 + filter_len * sizeof(char) bytes. 
 */
-static const int apply_raw_filter(FILE* file, char* raw_filter, int filter_len) {
-    // Currently I will not use SIMD. Goal will be to get it working without SIMD, 
-    // then modify to use SIMD. 
+static const int apply_raw_filter(FILE* file, char* raw_filter, int filter_len, char* buffer) {
     if(filter_len == 0) return 1;
     fpos_t old_start;
     fgetpos(file, &old_start);
-    size_t buffer_len = 32 + filter_len;
-    char* buffer = (char*) malloc((buffer_len + 1) * sizeof(char));
+    size_t buffer_len = 32 + filter_len; 
     uint32_t found = 0;
     if (buffer_len == fread(buffer, sizeof(char), buffer_len, file)) {
+
         const __m256i first = _mm256_set1_epi8(raw_filter[0]);
-        const __m256i last  = _mm256_set1_epi8(raw_filter[filter_len - 1]);
-
         const __m256i block_first = _mm256_loadu_si256((const __m256i*)(buffer));
-        const __m256i block_last  = _mm256_loadu_si256((const __m256i*)(buffer + filter_len - 1));
+        __m256i eq = _mm256_cmpeq_epi8(first, block_first);
+        for (int i = 1; i < filter_len; i++) {
+            if ( _mm256_movemask_epi8(eq) == 0) {
+                break;
+            }
 
-        const __m256i eq_first = _mm256_cmpeq_epi8(first, block_first);
-        const __m256i eq_last  = _mm256_cmpeq_epi8(last, block_last);
+            const __m256i current  = _mm256_set1_epi8(raw_filter[i]);
+            const __m256i block_current  = _mm256_loadu_si256((const __m256i*)(buffer + i));
+            const __m256i eq_current  = _mm256_cmpeq_epi8(current, block_current);
+            eq = _mm256_and_si256(eq, eq_current);
+        }
 
-        uint32_t mask = _mm256_movemask_epi8(_mm256_and_si256(eq_first, eq_last));
+        uint32_t mask = _mm256_movemask_epi8(eq);
         debug_printf("raw filter set\n");
         found = mask;
     } else {
-        found = 1u;
+        found = 0u;
+        
+        int ans = strstr(buffer, raw_filter) != NULL;
+        if (ans != 0) {
+            found = 1u; 
+        }
     }
-    debug_printf("post row-filter %s %i\n", buffer, found);
+    // debug_printf("post row-filter %s %i\n", buffer, found);
     fsetpos(file, &old_start);
     if(!found) return 0;
-    int ans = strstr(buffer, raw_filter) != NULL;
-    free(buffer);
-    debug_printf("ultimate answer %i\n", ans);
-    return ans;
+    return 1;
 }
 
 /*
@@ -341,6 +348,7 @@ static CSV_Grid* parse(const char* filename, int* col_idxs, const char** filters
     int row_count = 0;
     int col_count = -1;
 
+    char* buffer = (char*) malloc((33 + raw_filter_len) * sizeof(char));
     while (row_count < MAX_ROWS) {
         peeker = fgetc(fp);
         if (peeker == EOF) {
@@ -350,7 +358,7 @@ static CSV_Grid* parse(const char* filename, int* col_idxs, const char** filters
 
         debug_printf("current character %c\n", peeker);
         ungetc(peeker, fp);
-        if (apply_raw_filter(fp, raw_filter, raw_filter_len) != 0) {
+        if (apply_raw_filter(fp, raw_filter, raw_filter_len, buffer) != 0) {
             debug_printf("raw filter matches\n");
             int maybe_row_count;
             int new_col_count; 
@@ -383,6 +391,7 @@ static CSV_Grid* parse(const char* filename, int* col_idxs, const char** filters
     grid->cols = col_count;
     fclose(fp);
     free(raw_filter);
+    free(buffer);
     return grid;
 }
 
