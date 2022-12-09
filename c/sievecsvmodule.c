@@ -72,22 +72,24 @@ function.
 
 Assumes that each row will be much longer than our filter, or at least 8 characters per row.
 */
-static const int apply_raw_filter(FILE* file, char* raw_filter, int filter_len) {
+static const int apply_raw_filter(FILE* file, char* raw_filter, int filter_len, int simd_mode) {
     // Currently I will not use SIMD. Goal will be to get it working without SIMD, 
     // then modify to use SIMD. 
-    if(filter_len == 0) return 1;
+    // 0 = DEFAULT (new_simd), 1 = NAIVE_SIMD (first and last), 2 = NO_SIMD (C strstr matching only), 3 = NO_FILTER (all rows returned)
+    if(filter_len == 0 || simd_mode == 3) return 1; // simd_mode == 3 means we do no raw filtering
     fpos_t old_start;
     fgetpos(file, &old_start);
     size_t buffer_len = 32 + filter_len;
     char* buffer = (char*) malloc((buffer_len + 1) * sizeof(char));
     uint32_t found = 0;
-    if (buffer_len == fread(buffer, sizeof(char), buffer_len, file)) {
+    if (simd_mode != 2 &&  buffer_len == fread(buffer, sizeof(char), buffer_len, file)) { // simd_mode == 2 means we do C-based filtering only
         __m256i and = _mm256_set1_epi8(0b11111111);
         for(int i = 0; i < filter_len; i++) {
             const __m256i next = _mm256_set1_epi8(raw_filter[i]);
             const __m256i block_next = _mm256_loadu_si256((const __m256i*)(buffer + i));
             const __m256i eq_next = _mm256_cmpeq_epi8(next, block_next);
             and = _mm256_and_si256(and, eq_next);
+            if(simd_mode == 1) i += filter_len - 2; // simd_mode == 1 means match only first and last
         }
         uint32_t mask = _mm256_movemask_epi8(and);
         debug_filter_printf("raw filter set\n");
@@ -97,9 +99,9 @@ static const int apply_raw_filter(FILE* file, char* raw_filter, int filter_len) 
     }
     debug_filter_printf("post row-filter %s %i\n", buffer, found);
     fsetpos(file, &old_start);
-    if(!found) {
+    if (simd_mode == 0 || !found) { // simd_mode = 0 does full substring match
         free(buffer);
-        return 0;
+        return found;
     }
     int ans = strstr(buffer, raw_filter) != NULL;
     free(buffer);
@@ -335,7 +337,7 @@ Given a filename, a list of column indices, and a list of strings,
 return a representation of all rows in the CSV named filename,
 where, for i in [0, len(col_idxs)], the col_idxs[i]-th field is an exact match for filters[i].
 */
-static CSV_Grid* parse(const char* filename, int* col_idxs, const char** filters, int filter_count) {
+static CSV_Grid* parse(const char* filename, int* col_idxs, const char** filters, int filter_count, int simd_mode) {
     // will return a grid of at most MAX_ROWS rows
     CSV_Grid* grid = malloc(sizeof(CSV_Grid));
 
@@ -361,7 +363,7 @@ static CSV_Grid* parse(const char* filename, int* col_idxs, const char** filters
 
         debug_printf("current character %c\n", peeker);
         ungetc(peeker, fp);
-        if (apply_raw_filter(fp, raw_filter, raw_filter_len) != 0) {
+        if (apply_raw_filter(fp, raw_filter, raw_filter_len, simd_mode) != 0) {
             debug_printf("raw filter matches\n");
             int maybe_row_count;
             int new_col_count; 
@@ -435,12 +437,15 @@ SieveCSV_parse(PyObject *self, PyObject *args, PyObject *kwargs) {
 
     PyObject *colraw;
     PyObject *filtraw;
-    int no_simd = 0;
-    int no_c_filter = 0;
-    int naive_simd = 0;
-    static char *kwlist[] = {"filename", "columns", "filters", "no_simd", "no_c_filter", "naive_simd", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sOO|$pp", kwlist, &filename, &colraw, &filtraw, &no_simd, &no_c_filter, &naive_simd)) {
+    int simd_mode = 0; // 0 = DEFAULT (new_simd), 1 = NAIVE_SIMD (first and last), 2 = NO_SIMD (C strstr matching only), 3 = NO_FILTER (all rows returned)
+    static char *kwlist[] = {"filename", "columns", "filters", "simd_mode", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sOO|$p", kwlist, &filename, &colraw, &filtraw, &simd_mode)) {
         return NULL;
+    }
+
+    if(simd_mode < 0 || simd_mode > 3) {
+        PyErr_SetString(PyExc_ValueError, "simd_mode must be between 0 and 3, inclusive");
+        return NULL;    
     }
     
     if(!PyList_Check(colraw) || !PyList_Check(filtraw)) {
@@ -475,7 +480,7 @@ SieveCSV_parse(PyObject *self, PyObject *args, PyObject *kwargs) {
         filters[i] = PyUnicode_AsUTF8AndSize(filter, NULL);
     }
 
-    CSV_Grid* g = parse(filename, col_idxs, filters, col_size);
+    CSV_Grid* g = parse(filename, col_idxs, filters, col_size, simd_mode);
     PyObject* ret_val = wrap_grid(g);
     for(int i = 0; i < g->rows; i++){
         for(int j = 0; j < g->cols; j++) free(g-> table[i][j]);

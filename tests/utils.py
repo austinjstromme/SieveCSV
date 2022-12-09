@@ -1,6 +1,7 @@
 import unittest
 import csv
 import time
+import numpy as np
 
 import SieveCSV
 
@@ -133,18 +134,19 @@ def compare_output_multiple(testcase, filenames, cols, filters):
 
 
 def timing_loop(iterations, filename = "../csvs/small.csv", filters = ["1"], cols = [0]):
-    s_csv_time = 0
-    py_csv_time = 0
+    s_csv_time = [[], [], [], []]
+    py_csv_time = []
     for _ in range(iterations):
-        s_csv_start = time.time()
-        sievecsvfiltered = SieveCSV.parse_csv(filename, cols, filters)
-        s_csv_end = time.time()
-        s_csv_time += s_csv_end - s_csv_start
+        for i in range(4):
+            s_csv_start = time.time()
+            sievecsvfiltered = SieveCSV.parse_csv(filename, cols, filters, simd_mode = i)
+            s_csv_end = time.time()
+            s_csv_time[i].append(s_csv_end - s_csv_start)
 
         py_csv_start = time.time()
         pyfiltered = filter_csv(filename, cols, filters)
         py_csv_end = time.time()
-        py_csv_time += py_csv_end - py_csv_start
+        py_csv_time.append(py_csv_end - py_csv_start)
 
         if len(sievecsvfiltered) != len(pyfiltered):
             print(sievecsvfiltered)
@@ -157,4 +159,6 @@ def timing_loop(iterations, filename = "../csvs/small.csv", filters = ["1"], col
             if not same_row(rowsieve, rowpy):
                 raise Exception("did not match!")
 
-    return [s_csv_time, py_csv_time]
+    s_csv_times = [(np.average(s), np.std(s)) for s in s_csv_time]
+    s_csv_times.append((np.average(py_csv_time), np.std(py_csv_time)))
+    return s_csv_times
