@@ -379,7 +379,7 @@ static CSV_Grid* parse(const char* filename, int* col_idxs, const char** filters
             }
             free(maybe_rows);
         } else {
-            debug_printf("raw filter does not match\n");
+            debug_filter_printf("raw filter does not match\n");
             advance(fp); 
         }
         debug_printf("row_count %d MAX_ROWS %d\n", row_count, MAX_ROWS);
@@ -439,7 +439,7 @@ SieveCSV_parse(PyObject *self, PyObject *args, PyObject *kwargs) {
     PyObject *filtraw;
     int simd_mode = 0; // 0 = DEFAULT (new_simd), 1 = NAIVE_SIMD (first and last), 2 = NO_SIMD (C strstr matching only), 3 = NO_FILTER (all rows returned)
     static char *kwlist[] = {"filename", "columns", "filters", "simd_mode", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sOO|$p", kwlist, &filename, &colraw, &filtraw, &simd_mode)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sOO|$i", kwlist, &filename, &colraw, &filtraw, &simd_mode)) {
         return NULL;
     }
 
