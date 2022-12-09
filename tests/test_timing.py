@@ -9,6 +9,8 @@ def test_timing(iterations, filename = "../csvs/small.csv", filters = ["1"], col
 
 if __name__ == "__main__":
     print(test_timing(100, filename="../csvs/randomlarge.csv"))
+    print(test_timing(100, filename="../csvs/randomlarge.csv", filters=["6622"], cols=[4]))
+    print(test_timing(100, filename="../csvs/randomlarge.csv", filters=["Albertan"], cols=[6]))
     print(test_timing(100, filename="../csvs/randomlarge.csv", filters=["Albertan"], cols=[6]))
     print(test_timing(100, filename="../csvs/randomlarge_selective.csv", filters=["Albertan"], cols=[6]))
     print(test_timing(10000, filters = [], cols = []))

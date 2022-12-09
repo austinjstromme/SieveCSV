@@ -22,6 +22,16 @@ static void debug_printf(const char* format, ...) {
     }
 }
 
+static const int DEBUG_FILTER = 0;
+static void debug_filter_printf(const char* format, ...) {
+    if (DEBUG_FILTER != 0) {
+        va_list args;
+        va_start(args, format);
+        vprintf(format, args);
+        va_end(args);
+    }
+}
+
 static const int MAX_ROWS = 16384;
 static const int MAX_COLS = 1024;
 static const int MAX_LEN_ENTRY = 64;
@@ -72,22 +82,20 @@ static const int apply_raw_filter(FILE* file, char* raw_filter, int filter_len) 
     char* buffer = (char*) malloc((buffer_len + 1) * sizeof(char));
     uint32_t found = 0;
     if (buffer_len == fread(buffer, sizeof(char), buffer_len, file)) {
-        const __m256i first = _mm256_set1_epi8(raw_filter[0]);
-        const __m256i last  = _mm256_set1_epi8(raw_filter[filter_len - 1]);
-
-        const __m256i block_first = _mm256_loadu_si256((const __m256i*)(buffer));
-        const __m256i block_last  = _mm256_loadu_si256((const __m256i*)(buffer + filter_len - 1));
-
-        const __m256i eq_first = _mm256_cmpeq_epi8(first, block_first);
-        const __m256i eq_last  = _mm256_cmpeq_epi8(last, block_last);
-
-        uint32_t mask = _mm256_movemask_epi8(_mm256_and_si256(eq_first, eq_last));
-        debug_printf("raw filter set\n");
+        __m256i and = _mm256_set1_epi8(0b11111111);
+        for(int i = 0; i < filter_len; i++) {
+            const __m256i next = _mm256_set1_epi8(raw_filter[i]);
+            const __m256i block_next = _mm256_loadu_si256((const __m256i*)(buffer + i));
+            const __m256i eq_next = _mm256_cmpeq_epi8(next, block_next);
+            and = _mm256_and_si256(and, eq_next);
+        }
+        uint32_t mask = _mm256_movemask_epi8(and);
+        debug_filter_printf("raw filter set\n");
         found = mask;
     } else {
         found = 1u;
     }
-    debug_printf("post row-filter %s %i\n", buffer, found);
+    debug_filter_printf("post row-filter %s %i\n", buffer, found);
     fsetpos(file, &old_start);
     if(!found) {
         free(buffer);
@@ -95,7 +103,7 @@ static const int apply_raw_filter(FILE* file, char* raw_filter, int filter_len) 
     }
     int ans = strstr(buffer, raw_filter) != NULL;
     free(buffer);
-    debug_printf("ultimate answer %i\n", ans);
+    debug_filter_printf("ultimate answer %i\n", ans);
     return ans;
 }
 
@@ -240,8 +248,8 @@ static char** maybe_get_row(FILE* file, int* col_idxs, const char** filters, int
             is_good_row = 0;
             break;
         }
-        const char* loc = strstr(maybe_row[col_idxs[j]], filters[j]);
-        if (loc != NULL) {
+        const int loc = strcmp(maybe_row[col_idxs[j]], filters[j]);
+        if (loc == 0) {
             continue;
         } else {
             is_good_row = 0;

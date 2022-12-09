@@ -38,7 +38,7 @@ def filter_csv(filename, cols, filters):
         for (filt, i) in zipped_filters_cols:
             if i >= len(row):
                 continue
-            if filt not in row[i]:
+            if filt != row[i]:
                 passes_filters = False
                 break
 
