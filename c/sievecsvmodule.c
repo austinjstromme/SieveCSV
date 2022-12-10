@@ -82,7 +82,7 @@ static const int apply_raw_filter(FILE* file, char* raw_filter, int filter_len, 
     size_t buffer_len = 32 + filter_len;
     char* buffer = (char*) malloc((buffer_len + 1) * sizeof(char));
     uint32_t found = 0;
-    if (simd_mode != 2 &&  buffer_len == fread(buffer, sizeof(char), buffer_len, file)) { // simd_mode == 2 means we do C-based filtering only
+    if (buffer_len == fread(buffer, sizeof(char), buffer_len, file) && simd_mode != 2 ) { // simd_mode == 2 means we do C-based filtering only
         __m256i and = _mm256_set1_epi8(0b11111111);
         for(int i = 0; i < filter_len; i++) {
             const __m256i next = _mm256_set1_epi8(raw_filter[i]);

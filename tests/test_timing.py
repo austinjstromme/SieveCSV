@@ -1,17 +1,23 @@
 import time
 
 import utils
-import SieveCSV
+import csv
 
 def test_timing(iterations, filename = "../csvs/small.csv", filters = ["1"], cols = [0]):
     return utils.timing_loop(iterations, filename, filters, cols)
 
 if __name__ == "__main__":
-    # print(test_timing(100, filename="../csvs/randomlarge.csv"))
-    print(test_timing(100, filename="../csvs/randomlarge.csv", filters=["6626"], cols=[4]))
-        # print(simd_mode, test_timing(100, filename="../csvs/randomlarge.csv", filters=["Albertan"], cols=[6], simd_mode=simd_mode))
-        # print(simd_mode, test_timing(1000, filename="../csvs/randomlong-narrow.csv", filters=["Albertan"], cols=[6], simd_mode=simd_mode))
-    # print(test_timing(100, filename="../csvs/randomlarge.csv", filters=["Albertan"], cols=[6]))
-    # print(test_timing(100, filename="../csvs/randomlarge_selective.csv", filters=["Albertan"], cols=[6]))
-    # print(test_timing(10000, filters = [], cols = []))
-    # print(test_timing(10000))
+    with open("results.csv", "w", newline='') as f:
+        writer = csv.writer(f, lineterminator="\n")
+        for FPRATE in [0.25, 0.5]:
+            for TPRATE in [0.001, 0.01, 0.1, 0.25, 0.5]:
+                res = test_timing(100, filename=f"../csvs/testing/randomlarge-fp-{FPRATE}-tp-{TPRATE}.csv", filters=["6626"], cols=[0])
+                row = [FPRATE, TPRATE]
+                for r in res:
+                    row.append(r[0])
+                    row.append(r[1])
+                    row.append(r[2])
+                writer.writerow(row)
+                print(FPRATE, TPRATE)
+                f.flush()
+            
