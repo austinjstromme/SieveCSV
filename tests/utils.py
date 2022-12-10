@@ -2,6 +2,7 @@ import unittest
 import csv
 import time
 import numpy as np
+from multiprocessing import Process, Queue
 
 import SieveCSV
 
@@ -132,33 +133,55 @@ def compare_output_multiple(testcase, filenames, cols, filters):
         for fname, collist, filterlist in zippedargs:
             compare_output(testcase, fname, collist, filterlist)
 
+def py_time(filename, filters, cols, q):
+    py_csv_start = time.time()
+    pyfiltered = filter_csv(filename, cols, filters)
+    py_csv_end = time.time()
+    q.put(py_csv_end - py_csv_start)
+
+def sieve_time(filename, filters, cols, i, q):
+    s_csv_start = time.time()
+    sievecsvfiltered = SieveCSV.parse_csv(filename, cols, filters, simd_mode = i)
+    s_csv_end = time.time()
+    q.put(s_csv_end - s_csv_start)
+
+
 
 def timing_loop(iterations, filename = "../csvs/small.csv", filters = ["1"], cols = [0]):
     s_csv_time = [[], [], [], []]
     py_csv_time = []
+    queue = Queue()
     for _ in range(iterations):
+        print(_)
+        p = Process(target=py_time, args=(filename, filters, cols, queue))
+        p.start()
+        p.join()
+        py_csv_time.append(queue.get())
+
         for i in range(4):
-            s_csv_start = time.time()
-            sievecsvfiltered = SieveCSV.parse_csv(filename, cols, filters, simd_mode = i)
-            s_csv_end = time.time()
-            s_csv_time[i].append(s_csv_end - s_csv_start)
+            p = Process(target=sieve_time, args=(filename, filters, cols, i, queue))
+            p.start()
+            p.join()
+            s_csv_time[i].append(queue.get())
 
-        py_csv_start = time.time()
-        pyfiltered = filter_csv(filename, cols, filters)
-        py_csv_end = time.time()
-        py_csv_time.append(py_csv_end - py_csv_start)
+            """
+            if len(sievecsvfiltered) != len(pyfiltered):
+                raise Exception("did not match! " + str(_))
 
-        if len(sievecsvfiltered) != len(pyfiltered):
-            print(sievecsvfiltered)
-            print(pyfiltered)
-            raise Exception("did not match! " + str(_))
+            zippedfiltered = zip(sievecsvfiltered, pyfiltered)
 
-        zippedfiltered = zip(sievecsvfiltered, pyfiltered)
+            for rowsieve, rowpy in zippedfiltered:
+                if not same_row(rowsieve, rowpy):
+                    raise Exception("did not match!")
+            """
+    s_csv_times = [(np.average(s), np.std(s), len(s)) for s in s_csv_time]
+    s_csv_time = [reject_outliers(np.array(s)) for s in s_csv_time]
+    s_csv_times_post = [(np.average(s), np.std(s), len(s)) for s in s_csv_time]
+    s_csv_times.append((np.average(py_csv_time), np.std(py_csv_time), len(py_csv_time)))
+    py_csv_time = reject_outliers(np.array(py_csv_time))
+    s_csv_times_post.append((np.average(py_csv_time), np.std(py_csv_time), len(py_csv_time)))
+    return (s_csv_times, s_csv_times_post)
 
-        for rowsieve, rowpy in zippedfiltered:
-            if not same_row(rowsieve, rowpy):
-                raise Exception("did not match!")
-
-    s_csv_times = [(np.average(s), np.std(s)) for s in s_csv_time]
-    s_csv_times.append((np.average(py_csv_time), np.std(py_csv_time)))
-    return s_csv_times
+def reject_outliers(data, m=2):
+    # return data
+    return data[abs(data - np.mean(data)) < m * np.std(data)]
