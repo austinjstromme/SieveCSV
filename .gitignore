@@ -5,3 +5,4 @@ build/
 */title.basics.short.csv
 */title.basics.csv
 tests/results.csv
+tests/__pycache__/

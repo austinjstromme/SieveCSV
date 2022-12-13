@@ -18,6 +18,7 @@ rows = SieveCSV.parse_csv(filename, [0, 1], ["6583", "2022"], simd_mode = 3)
 ```
 * `rows` above should then contain a list of lists, where each element of `rows` is a list of the entries of a row of the CSV file at `data.csv`, subject to the condition that the 0th column (0-indexed) is "6583", and the 1st column is "2022".
 * `simd_mode` is an optional, keyword-only parameter that represents the time of filtering to use. There are 4 allowed values of `simd_mode`, as follows. (When multiple strings are given to filter on, the first is used for raw filtering.)
+
 | `simd_mode` value | Description |
 | ----------------- | ----------- |
 | 0 (default)       | Using SIMD to implement a raw filter on the entirety of the string to match on. |
