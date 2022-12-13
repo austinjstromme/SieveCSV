@@ -1,2 +1,7 @@
 build/
 *.so
+*.gz
+*.tsv
+*/title.basics.short.csv
+*/title.basics.csv
+tests/results.csv

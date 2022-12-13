@@ -9,7 +9,7 @@ def test_timing(iterations, filename, filters, cols):
     return utils.timing_loop(iterations, filename, filters, cols)
 
 def main():
-    res, res_port = utils.timing_loop(1, "../csvs/title.basics.short.csv", ['1895'], [5])
+    res, res_port = utils.timing_loop(2, "../csvs/title.basics.short.csv", ['1895'], [5])
 
     print("res = " + str(res))
     print("res_port = " + str(res_port))
