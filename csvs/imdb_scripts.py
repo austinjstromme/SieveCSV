@@ -11,20 +11,19 @@ def trim_title():
         shortened.append(cr.__next__())
 
     fout = open('title.basics.short.csv', 'w')
-    cw = csv.writer(fout, quotechar='', quoting=csv.QUOTE_NONE)
+    cw = csv.writer(fout, lineterminator="\n")
     cw.writerows(shortened)
 
-
 def convert_tsv_to_csv():
-    with open('title.basics.csv','r') as fin:
-        cr = csv.reader(fin, delimiter=',')
-        filecontents = [line for line in cr]
-
-    with open('title.basics.csv','w') as fou:
-        cw = csv.writer(fou, quotechar='', quoting=csv.QUOTE_NONE, escapechar='\\')
-        cw.writerows(filecontents)
+    with open('title.basics.tsv','r') as fin:
+        with open('title.basics.csv','w', newline='') as fou:
+            cr = csv.reader(fin, delimiter='\t')
+            cw = csv.writer(fou, lineterminator="\n")
+            for line in cr:
+                cw.writerow(line)
 
 def main():
+    convert_tsv_to_csv()
     trim_title()
 
 if __name__ == '__main__':
