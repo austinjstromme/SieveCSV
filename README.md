@@ -16,6 +16,12 @@ Then can use
 as normal (though will need to add methods in sievecsvmodule.c
 in the proper way)
 
+--- 
+FOR IMDB:
+download title.basics.tsv.gz from https://www.imdb.com/interfaces/
+
+unpack and place in csvs/
+
 ---
 FOR TESTING:
 
