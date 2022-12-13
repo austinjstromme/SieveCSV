@@ -34,6 +34,13 @@ class TestFilter(unittest.TestCase):
         cols = [[10]]
 
         utils.compare_output_multiple(self, filenames, cols, filters)
+    
+    def test_filter_imdb(self):
+        filenames = ['../csvs/title.basics.short.csv']
+        filters = [['1895'], ['1896'], ['1897']]
+        cols = [[5]]
+
+        utils.compare_output_multiple(self, filenames, cols, filters)        
 
 if __name__ == '__main__':
     test_loader = unittest.defaultTestLoader
