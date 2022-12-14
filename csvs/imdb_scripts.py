@@ -19,12 +19,23 @@ def convert_tsv_to_csv():
         with open('title.basics.csv','w', newline='') as fou:
             cr = csv.reader(fin, delimiter='\t')
             cw = csv.writer(fou, lineterminator="\n")
+            count = 0
+            count_p = 0
             for line in cr:
-                cw.writerow(line)
+                incl = True
+                count_p += 1
+                for i in line:
+                    if len(i) > 64:
+                        count += 1
+                        incl = False
+                        break
+                if incl:
+                    cw.writerow(line)
+            print(count, count_p)
 
 def main():
     convert_tsv_to_csv()
-    trim_title()
+    # trim_title()
 
 if __name__ == '__main__':
     main()
