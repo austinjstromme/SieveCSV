@@ -145,9 +145,8 @@ def sieve_time(filename, filters, cols, i, q):
     s_csv_end = time.time()
     q.put(s_csv_end - s_csv_start)
 
-
-
-def timing_loop(iterations, filename = "../csvs/small.csv", filters = ["1"], cols = [0]):
+def timing_loop(iterations, filename = "../csvs/small.csv", filters = ["1"], cols = [0],
+        simd_modes=range(4)):
     s_csv_time = [[], [], [], []]
     py_csv_time = []
     queue = Queue()
@@ -158,7 +157,7 @@ def timing_loop(iterations, filename = "../csvs/small.csv", filters = ["1"], col
         p.join()
         py_csv_time.append(queue.get())
 
-        for i in range(4):
+        for i in simd_modes:
             p = Process(target=sieve_time, args=(filename, filters, cols, i, queue))
             p.start()
             p.join()
