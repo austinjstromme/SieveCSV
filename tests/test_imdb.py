@@ -95,7 +95,7 @@ def gather_data():
     year_timings = {}
 
     for year in years:
-        res, res_post = utils.timing_loop(3, filename=f"../csvs/title.basics.csv", filters=[str(year)], cols=[5], simd_modes=[0, 3])
+        res, res_post = utils.timing_loop(10, filename=f"../csvs/title.basics.csv", filters=[str(year)], cols=[5], simd_modes=[0, 3])
         year_timings[year] = [res, res_post]
 
         row = [0, year]
