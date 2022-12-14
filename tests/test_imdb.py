@@ -117,7 +117,7 @@ def gather_data():
     fout.close()
 
 def main():
-    gather_data()
+    # gather_data()
     plot_data()
     #gather_selectivities(write=True)
     # res, res_port = utils.timing_loop(2, "../csvs/title.basics.csv", ['1895'], [5])
